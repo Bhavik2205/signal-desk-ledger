@@ -79,7 +79,7 @@
   const get = async (p, type = 'text') => { const r = await fetch(`${p}?v=${Date.now()}`, { cache: 'no-store' }); if (!r.ok) return null; return type === 'json' ? r.json() : r.text(); };
 
   const idx = await get('ledger/index.json', 'json').catch(() => null) || { days: [], startDay: null };
-  $('#sub').textContent = `Automatic paper trades on live NSE prices${idx.startDay ? ` · recorded since ${dayName(idx.startDay)}` : ''}${idx.generatedAt ? ` · updated ${new Date(idx.generatedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })} IST` : ''}`;
+  $('#sub').textContent = `Automatic paper trades on live NSE prices${idx.startDay ? ` · ${idx.days.length ? 'recorded since' : 'starts'} ${dayName(idx.startDay)}` : ''}${idx.generatedAt ? ` · updated ${new Date(idx.generatedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })} IST` : ''}`;
 
   // ---------------------------------------------------------------- verify
   let prev = '0'.repeat(64), seq = 0, n = 0;
@@ -181,7 +181,7 @@
 
   function howTo(head) {
     return `<div class="panel"><h2>How to check this yourself</h2><ol class="small">
-      <li>Every event (alert, paper fill, exit with its charges) is written once to a daily log. Each line holds the SHA-256 fingerprint of the line before it, so changing, adding or removing any past line breaks every line after it. This page has just re-checked all ${n} lines in your browser.</li>
+      <li>Every event (alert, paper fill, exit with its charges) is written once to a daily log. Each line holds the SHA-256 fingerprint of the line before it, so changing, adding or removing any past line breaks every line after it. ${n ? `This page has just re-checked all ${n} lines in your browser.` : 'This page re-checks every line in your browser each time it opens.'}</li>
       <li>After each close (15:45 IST) the day is sealed. Its fingerprint is timestamped on the Bitcoin blockchain with <a href="https://opentimestamps.org">OpenTimestamps</a>, which proves it existed at that time and has not changed since. To check, drop a day's <code>.root.ots</code> and <code>.root</code> files on opentimestamps.org.</li>
       <li>The full history is kept in a public ${idx.repoUrl ? `<a href="${esc(idx.repoUrl)}">Git repository</a>` : 'Git repository'}. Check it offline with Node.js: <code>git clone</code> it, then <code>node verify-ledger.js ledger</code>.</li>
       ${head ? `<li>Latest fingerprint: <code>${head}</code></li>` : ''}</ol></div>`;
