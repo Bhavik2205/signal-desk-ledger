@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signal Desk Verified Record</title>
+<meta name="description" content="Tamper-evident record of Signal Desk's automatic paper trades on live NSE prices, checked in your browser and timestamped on Bitcoin.">
+<style>
+  :root { --bg: #0b0f17; --panel: #121826; --line: #222b3d; --text: #e6ebf5; --muted: #8b96ab; --up: #22c55e; --down: #f05252; --accent: #5aa9ff; --warn: #f5b942; }
+  @media (prefers-color-scheme: light) { :root { --bg: #f6f7fb; --panel: #fff; --line: #e3e7ef; --text: #131a2a; --muted: #5d6880; --up: #128a43; --down: #c8322f; --accent: #1d6fe0; --warn: #a86b00; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h2 { font-size: 17px; margin: 0 0 12px; }
+  a { color: var(--accent); }
+  .muted { color: var(--muted); } .small { font-size: 13px; }
+  .up { color: var(--up); } .down { color: var(--down); }
+  .num { font-variant-numeric: tabular-nums; }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between; margin-bottom: 18px; }
+  .badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); font-weight: 600; }
+  .badge.ok { border-color: color-mix(in srgb, var(--up) 50%, transparent); color: var(--up); }
+  .badge.bad { border-color: var(--down); color: var(--down); }
+  .note { border: 1px solid var(--line); border-left: 3px solid var(--warn); background: var(--panel); border-radius: 8px; padding: 10px 14px; margin-bottom: 18px; font-size: 13px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .kpi .k { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .kpi .v { font-size: 22px; font-weight: 650; margin-top: 2px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
+  .wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  td.r, th.r { text-align: right; }
+  tr.day td { background: color-mix(in srgb, var(--accent) 8%, transparent); font-weight: 600; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; border: 1px solid var(--line); }
+  .pill.LONG { color: var(--up); } .pill.SHORT { color: var(--down); }
+  svg { display: block; width: 100%; height: 180px; }
+  code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
+  ol li { margin-bottom: 6px; }
+  .empty { padding: 28px; text-align: center; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Signal Desk: verified paper-trading record</h1>
+      <div class="muted small" id="sub">Automatic paper trades on live NSE prices · loading…</div>
+    </div>
+    <div class="badge" id="badge">Checking the record in your browser…</div>
+  </header>
+  <div class="note"><b>Paper trades, not real money.</b> Every alert is paper-traded automatically on live market prices, with brokerage, taxes and fees taken off. Nothing here is investment advice or a promise of future returns. Practice and simulated sessions are never recorded.</div>
+  <div id="app"><div class="panel empty">Loading the ledger…</div></div>
+</main>
+<script>
+(async () => {
+  const IST = 330 * 60000;
+  const $ = (s) => document.querySelector(s);
+  const esc = (x) => String(x ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const inr = (x) => `${x < 0 ? '−' : ''}₹${Math.abs(Math.round(x || 0)).toLocaleString('en-IN')}`;
+  const cls = (x) => (x > 0 ? 'up' : x < 0 ? 'down' : '');
+  const r2 = (x) => Math.round(x * 100) / 100;
+  const ist = (t) => new Date(t + IST);
+  const hm = (t) => (t ? ist(t).toISOString().slice(11, 16) : '—');
+  const dayName = (d) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+  const held = (a, b) => { const m = Math.round((b - a) / 60000); return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`; };
+
+  // the same canonical JSON + SHA-256 the desk uses when it writes each entry
+  const canonical = (v) => {
+    if (v === null || typeof v !== 'object') return JSON.stringify(v === undefined ? null : v);
+    if (Array.isArray(v)) return `[${v.map(canonical).join(',')}]`;
+    return `{${Object.keys(v).filter((k) => v[k] !== undefined).sort().map((k) => `${JSON.stringify(k)}:${canonical(v[k])}`).join(',')}}`;
+  };
+  const sha256 = async (s) => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)))].map((b) => b.toString(16).padStart(2, '0')).join('');
+  const hashOf = (e) => { const c = { ...e }; delete c.hash; return sha256(canonical(c)); };
+  const get = async (p, type = 'text') => { const r = await fetch(`${p}?v=${Date.now()}`, { cache: 'no-store' }); if (!r.ok) return null; return type === 'json' ? r.json() : r.text(); };
+
+  const idx = await get('ledger/index.json', 'json').catch(() => null) || { days: [], startDay: null };
+  $('#sub').textContent = `Automatic paper trades on live NSE prices${idx.startDay ? ` · recorded since ${dayName(idx.startDay)}` : ''}${idx.generatedAt ? ` · updated ${new Date(idx.generatedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })} IST` : ''}`;
+
+  // ---------------------------------------------------------------- verify
+  let prev = '0'.repeat(64), seq = 0, n = 0;
+  const problems = [], days = [];
+  for (const d of idx.days) {
+    const text = await get(`ledger/${d.day}.jsonl`);
+    if (text == null) { problems.push(`${d.day}: file missing`); continue; }
+    const entries = text.split('\n').filter(Boolean).map((l) => JSON.parse(l));
+    for (const e of entries) {
+      n++;
+      if (e.prev !== prev) problems.push(`${d.day} entry ${e.seq}: does not link to the entry before it`);
+      if (await hashOf(e) !== e.hash) problems.push(`${d.day} entry ${e.seq}: content differs from its fingerprint`);
+      if (e.seq !== seq + 1) problems.push(`${d.day} entry ${e.seq}: entries missing or out of order`);
+      prev = e.hash; seq = e.seq;
+    }
+    const close = entries.find((e) => e.type === 'DAY_CLOSE');
+    if (close) {
+      const exits = entries.filter((e) => e.type === 'EXIT' && e.seq < close.seq);
+      if (r2(exits.reduce((a, e) => a + (e.data.net || 0), 0)) !== close.data.net) problems.push(`${d.day}: day total does not match its trades`);
+      const root = (await get(`ledger/${d.day}.root`) || '').trim();
+      if (root && root !== close.hash) problems.push(`${d.day}: .root file does not match the day's seal`);
+    }
+    days.push({ ...d, entries, close });
+  }
+  const badge = $('#badge');
+  if (!n) { badge.textContent = 'Record not started yet'; }
+  else if (problems.length) { badge.className = 'badge bad'; badge.textContent = `✗ ${problems.length} problem(s) found`; }
+  else { badge.className = 'badge ok'; badge.textContent = `✓ Verified in your browser · ${n} entries intact`; }
+
+  // ---------------------------------------------------------------- trades
+  const all = days.flatMap((d) => d.entries);
+  const fills = new Map(all.filter((e) => e.type === 'FILL').map((e) => [e.data.trade, e]));
+  const alerts = new Map(all.filter((e) => e.type === 'ALERT').map((e) => [e.data.id, e.data]));
+  const trades = all.filter((e) => e.type === 'EXIT').map((x) => {
+    const f = fills.get(x.data.trade);
+    const a = alerts.get(x.data.alert) || {};
+    const inAt = f?.data.at ?? x.data.at;
+    return { id: x.data.trade, day: ist(inAt).toISOString().slice(0, 10), inAt, outAt: x.data.at, label: x.data.label || f?.data.label, side: f?.data.side || a.side, qty: f?.data.qty,
+      entry: f?.data.price, exit: x.data.price, charges: x.data.charges || 0, net: x.data.net || 0, reason: x.data.reason, strategy: a.strategy, seq: x.seq };
+  }).sort((p, q) => p.inAt - q.inAt);
+  const open = [...fills.values()].filter((f) => !trades.some((t) => t.id === f.data.trade));
+
+  if (!days.length) {
+    $('#app').innerHTML = `<div class="panel empty">The record starts${idx.startDay ? ` on <b>${dayName(idx.startDay)}</b>` : ' soon'}. Each trading day is added here after the close (15:45 IST), sealed with a fingerprint and timestamped on Bitcoin.</div>${howTo()}`;
+    return;
+  }
+
+  // ---------------------------------------------------------------- numbers
+  const wins = trades.filter((t) => t.net > 0), losses = trades.filter((t) => t.net <= 0);
+  const net = trades.reduce((a, t) => a + t.net, 0), charges = trades.reduce((a, t) => a + t.charges, 0);
+  let cum = 0, peak = 0, dd = 0;
+  const curve = trades.map((t) => { cum += t.net; peak = Math.max(peak, cum); dd = Math.min(dd, cum - peak); return cum; });
+  const avg = (xs) => (xs.length ? xs.reduce((a, t) => a + t.net, 0) / xs.length : 0);
+  const kpi = (k, v, c = '') => `<div class="kpi"><div class="k">${k}</div><div class="v num ${c}">${v}</div></div>`;
+
+  const slots = [[915, 1000, '09:15–10:00'], [1000, 1100, '10:00–11:00'], [1100, 1200, '11:00–12:00'], [1200, 1300, '12:00–13:00'], [1300, 1400, '13:00–14:00'], [1400, 1530, '14:00–15:30']];
+  const hhmm = (t) => { const d = ist(t); return d.getUTCHours() * 100 + d.getUTCMinutes(); };
+  const group = (keyOf, keys) => keys.map(([k, label]) => { const xs = trades.filter((t) => keyOf(t) === k); return { label, n: xs.length, w: xs.filter((t) => t.net > 0).length, net: xs.reduce((a, t) => a + t.net, 0) }; });
+  const byTime = group((t) => slots.findIndex(([a, b]) => hhmm(t.inAt) >= a && hhmm(t.inAt) < b), slots.map((s, i) => [i, s[2]]));
+  const byWd = group((t) => ist(t.inAt).getUTCDay(), [[1, 'Monday'], [2, 'Tuesday'], [3, 'Wednesday'], [4, 'Thursday'], [5, 'Friday']]);
+  const gtable = (title, rows) => `<div class="panel"><h2>${title}</h2><div class="wrap"><table><tr><th>${title.includes('time') ? 'Entry time (IST)' : 'Day'}</th><th class="r">Trades</th><th class="r">Won</th><th class="r">Win rate</th><th class="r">Net</th></tr>
+    ${rows.map((r) => `<tr><td>${r.label}</td><td class="r num">${r.n}</td><td class="r num">${r.w}</td><td class="r num">${r.n ? Math.round((r.w / r.n) * 100) + '%' : '—'}</td><td class="r num ${cls(r.net)}">${r.n ? inr(r.net) : '—'}</td></tr>`).join('')}</table></div></div>`;
+
+  // equity curve
+  const W = 1000, H = 180, lo = Math.min(0, ...curve), hi = Math.max(0, ...curve), span = hi - lo || 1;
+  const pt = (v, i) => `${((i + 1) / curve.length) * W},${H - 10 - ((v - lo) / span) * (H - 20)}`;
+  const svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><line x1="0" x2="${W}" y1="${H - 10 - ((0 - lo) / span) * (H - 20)}" y2="${H - 10 - ((0 - lo) / span) * (H - 20)}" stroke="var(--line)" stroke-dasharray="4 4"/>
+    <polyline fill="none" stroke="${cum >= 0 ? 'var(--up)' : 'var(--down)'}" stroke-width="2.5" vector-effect="non-scaling-stroke" points="0,${H - 10 - ((0 - lo) / span) * (H - 20)} ${curve.map(pt).join(' ')}"/></svg>`;
+
+  const file = (d, ext, text) => `<a href="ledger/${d}${ext}">${text}</a>`;
+  const seal = (d) => (!d.close ? '<span class="muted">open</span>'
+    : `${file(d.day, '.jsonl', 'log')} · ${file(d.day, '.root', 'seal')} · ${d.confirmed ? `${file(d.day, '.root.ots', `in Bitcoin${d.block ? ` block ${d.block}` : ''} ✓`)}` : d.stamped ? file(d.day, '.root.ots', 'Bitcoin: pending') : '<span class="muted">not stamped</span>'}`);
+  const dayRows = days.map((d) => {
+    const xs = trades.filter((t) => t.day === d.day);
+    const v = xs.reduce((a, t) => a + t.net, 0);
+    return `<tr><td>${dayName(d.day)}</td><td class="r num">${d.entries.filter((e) => e.type === 'ALERT').length}</td><td class="r num">${xs.length}</td><td class="r num">${xs.filter((t) => t.net > 0).length}</td><td class="r num ${cls(v)}">${xs.length ? inr(v) : '—'}</td><td class="small">${seal(d)}</td></tr>`;
+  }).reverse().join('');
+
+  let last = '';
+  const tradeRows = [...trades].reverse().map((t) => {
+    const head = t.day !== last ? `<tr class="day"><td colspan="11">${dayName(t.day)}</td></tr>` : '';
+    last = t.day;
+    return `${head}<tr><td class="num">${hm(t.inAt)} → ${hm(t.outAt)}</td><td class="muted">${held(t.inAt, t.outAt)}</td><td>${esc(t.label)}</td><td><span class="pill ${esc(t.side)}">${t.side === 'SHORT' ? 'Sell' : 'Buy'}</span></td><td class="r num">${t.qty ?? '—'}</td>
+      <td class="r num">${t.entry ?? '—'}</td><td class="r num">${t.exit ?? '—'}</td><td class="r num muted">${inr(t.charges)}</td><td class="r num ${cls(t.net)}"><b>${inr(t.net)}</b></td><td class="small">${esc(t.reason || '')}</td><td class="r small muted">#${t.seq}</td></tr>`;
+  }).join('');
+
+  $('#app').innerHTML = `
+    <div class="kpis">
+      ${kpi('Trading days', days.length)}${kpi('Closed trades', trades.length)}${kpi('Win rate', trades.length ? `${Math.round((wins.length / trades.length) * 100)}%` : '—')}
+      ${kpi('Net after charges', inr(net), cls(net))}${kpi('Avg win / avg loss', `${inr(avg(wins))} / ${inr(avg(losses))}`)}${kpi('Worst drop from peak', inr(dd), dd < 0 ? 'down' : '')}${kpi('Charges paid', inr(charges))}
+    </div>
+    <div class="panel"><h2>Running net P&amp;L, trade by trade</h2>${curve.length ? svg : '<div class="empty">No closed trades yet</div>'}</div>
+    <div class="panel"><h2>By date</h2><div class="wrap"><table><tr><th>Date</th><th class="r">Alerts</th><th class="r">Trades</th><th class="r">Won</th><th class="r">Net</th><th>Proof</th></tr>${dayRows}</table></div></div>
+    <div class="two">${gtable('By time of day', byTime)}${gtable('By weekday', byWd)}</div>
+    <div class="panel"><h2>Every trade</h2><p class="muted small">Times are IST. # is the trade's entry number in the ledger.${open.length ? ` ${open.length} trade(s) still open.` : ''}</p>
+      <div class="wrap"><table><tr><th>In → out</th><th>Held</th><th>Instrument</th><th>Side</th><th class="r">Qty</th><th class="r">Entry</th><th class="r">Exit</th><th class="r">Charges</th><th class="r">Net</th><th>Why it closed</th><th class="r">#</th></tr>${tradeRows || '<tr><td colspan="11" class="empty">No closed trades yet</td></tr>'}</table></div></div>
+    ${problems.length ? `<div class="panel"><h2 class="down">Problems found</h2><ul>${problems.map((p) => `<li>${esc(p)}</li>`).join('')}</ul></div>` : ''}
+    ${howTo(prev)}`;
+
+  function howTo(head) {
+    return `<div class="panel"><h2>How to check this yourself</h2><ol class="small">
+      <li>Every event (alert, paper fill, exit with its charges) is written once to a daily log. Each line holds the SHA-256 fingerprint of the line before it, so changing, adding or removing any past line breaks every line after it. This page has just re-checked all ${n} lines in your browser.</li>
+      <li>After each close (15:45 IST) the day is sealed. Its fingerprint is timestamped on the Bitcoin blockchain with <a href="https://opentimestamps.org">OpenTimestamps</a>, which proves it existed at that time and has not changed since. To check, drop a day's <code>.root.ots</code> and <code>.root</code> files on opentimestamps.org.</li>
+      <li>The full history is kept in a public ${idx.repoUrl ? `<a href="${esc(idx.repoUrl)}">Git repository</a>` : 'Git repository'}. Check it offline with Node.js: <code>git clone</code> it, then <code>node verify-ledger.js ledger</code>.</li>
+      ${head ? `<li>Latest fingerprint: <code>${head}</code></li>` : ''}</ol></div>`;
+  }
+})();
+</script>
+</body>
+</html>
