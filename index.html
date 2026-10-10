@@ -82,7 +82,8 @@
   $('#sub').textContent = `Automatic paper trades on live NSE prices${idx.startDay ? ` · ${idx.days.length ? 'recorded since' : 'starts'} ${dayName(idx.startDay)}` : ''}${idx.generatedAt ? ` · updated ${new Date(idx.generatedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })} IST` : ''}`;
 
   // ---------------------------------------------------------------- verify
-  let prev = '0'.repeat(64), seq = 0, n = 0;
+  let prev = '0'.repeat(64), seq = 0, n = 0, start = null, cumNet = 0;
+  const changes = [];
   const problems = [], days = [];
   for (const d of idx.days) {
     const text = await get(`ledger/${d.day}.jsonl`);
@@ -94,6 +95,10 @@
       if (await hashOf(e) !== e.hash) problems.push(`${d.day} entry ${e.seq}: content differs from its fingerprint`);
       if (e.seq !== seq + 1) problems.push(`${d.day} entry ${e.seq}: entries missing or out of order`);
       prev = e.hash; seq = e.seq;
+      if (e.type === 'START') start = { ...e.data, at: e.at };
+      if (e.type === 'CAPITAL') changes.push({ ...e.data, at: e.at });
+      if (e.type === 'EXIT') cumNet += e.data.net || 0;
+      if (e.type === 'DAY_CLOSE' && start && e.data.balance != null && r2(start.capital + cumNet) !== e.data.balance) problems.push(`${d.day}: closing balance does not match the starting balance plus results`);
     }
     const close = entries.find((e) => e.type === 'DAY_CLOSE');
     if (close) {
@@ -123,17 +128,20 @@
   const open = [...fills.values()].filter((f) => !trades.some((t) => t.id === f.data.trade));
 
   if (!days.length) {
-    $('#app').innerHTML = `<div class="panel empty">The record starts${idx.startDay ? ` on <b>${dayName(idx.startDay)}</b>` : ' soon'}. Each trading day is added here after the close (15:45 IST), sealed with a fingerprint and timestamped on Bitcoin.</div>${howTo()}`;
+    $('#app').innerHTML = `${start ? `<div class="panel small"><b>Starting balance ${inr(start.capital)}</b> · ${start.riskPct}% risk per trade</div>` : ''}<div class="panel empty">The record starts${idx.startDay ? ` on <b>${dayName(idx.startDay)}</b>` : ' soon'}. Each trading day is added here after the close (15:45 IST), sealed with a fingerprint and timestamped on Bitcoin.</div>${howTo()}`;
     return;
   }
 
   // ---------------------------------------------------------------- numbers
+  const base = start?.capital ?? 0;
   const wins = trades.filter((t) => t.net > 0), losses = trades.filter((t) => t.net <= 0);
   const net = trades.reduce((a, t) => a + t.net, 0), charges = trades.reduce((a, t) => a + t.charges, 0);
   let cum = 0, peak = 0, dd = 0;
-  const curve = trades.map((t) => { cum += t.net; peak = Math.max(peak, cum); dd = Math.min(dd, cum - peak); return cum; });
+  const curve = trades.map((t) => { cum += t.net; peak = Math.max(peak, cum); dd = Math.min(dd, cum - peak); return base + cum; });
   const avg = (xs) => (xs.length ? xs.reduce((a, t) => a + t.net, 0) / xs.length : 0);
-  const kpi = (k, v, c = '') => `<div class="kpi"><div class="k">${k}</div><div class="v num ${c}">${v}</div></div>`;
+  const kpi = (k, v, c = '', sub = '') => `<div class="kpi"><div class="k">${k}</div><div class="v num ${c}">${v}</div>${sub ? `<div class="muted small">${sub}</div>` : ''}</div>`;
+  const pct = (x) => (base ? `${x >= 0 ? '+' : '−'}${Math.abs((x / base) * 100).toFixed(2)}%` : '');
+  const sizedOn = (s) => (s.sizedOn === 'paper' ? 'the paper balance at the time' : s.sizedOn === 'zerodha' ? `the Zerodha balance (${inr(s.capital)})` : inr(s.capital));
 
   const slots = [[915, 1000, '09:15–10:00'], [1000, 1100, '10:00–11:00'], [1100, 1200, '11:00–12:00'], [1200, 1300, '12:00–13:00'], [1300, 1400, '13:00–14:00'], [1400, 1530, '14:00–15:30']];
   const hhmm = (t) => { const d = ist(t); return d.getUTCHours() * 100 + d.getUTCMinutes(); };
@@ -144,10 +152,10 @@
     ${rows.map((r) => `<tr><td>${r.label}</td><td class="r num">${r.n}</td><td class="r num">${r.w}</td><td class="r num">${r.n ? Math.round((r.w / r.n) * 100) + '%' : '—'}</td><td class="r num ${cls(r.net)}">${r.n ? inr(r.net) : '—'}</td></tr>`).join('')}</table></div></div>`;
 
   // equity curve
-  const W = 1000, H = 180, lo = Math.min(0, ...curve), hi = Math.max(0, ...curve), span = hi - lo || 1;
+  const W = 1000, H = 180, lo = Math.min(base, ...curve), hi = Math.max(base, ...curve), span = hi - lo || 1;
   const pt = (v, i) => `${((i + 1) / curve.length) * W},${H - 10 - ((v - lo) / span) * (H - 20)}`;
-  const svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><line x1="0" x2="${W}" y1="${H - 10 - ((0 - lo) / span) * (H - 20)}" y2="${H - 10 - ((0 - lo) / span) * (H - 20)}" stroke="var(--line)" stroke-dasharray="4 4"/>
-    <polyline fill="none" stroke="${cum >= 0 ? 'var(--up)' : 'var(--down)'}" stroke-width="2.5" vector-effect="non-scaling-stroke" points="0,${H - 10 - ((0 - lo) / span) * (H - 20)} ${curve.map(pt).join(' ')}"/></svg>`;
+  const svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><line x1="0" x2="${W}" y1="${H - 10 - ((base - lo) / span) * (H - 20)}" y2="${H - 10 - ((base - lo) / span) * (H - 20)}" stroke="var(--line)" stroke-dasharray="4 4"/>
+    <polyline fill="none" stroke="${cum >= 0 ? 'var(--up)' : 'var(--down)'}" stroke-width="2.5" vector-effect="non-scaling-stroke" points="0,${H - 10 - ((base - lo) / span) * (H - 20)} ${curve.map(pt).join(' ')}"/></svg>`;
 
   const file = (d, ext, text) => `<a href="ledger/${d}${ext}">${text}</a>`;
   const seal = (d) => (!d.close ? '<span class="muted">open</span>'
@@ -155,7 +163,7 @@
   const dayRows = days.map((d) => {
     const xs = trades.filter((t) => t.day === d.day);
     const v = xs.reduce((a, t) => a + t.net, 0);
-    return `<tr><td>${dayName(d.day)}</td><td class="r num">${d.entries.filter((e) => e.type === 'ALERT').length}</td><td class="r num">${xs.length}</td><td class="r num">${xs.filter((t) => t.net > 0).length}</td><td class="r num ${cls(v)}">${xs.length ? inr(v) : '—'}</td><td class="small">${seal(d)}</td></tr>`;
+    return `<tr><td>${dayName(d.day)}</td><td class="r num">${d.entries.filter((e) => e.type === 'ALERT').length}</td><td class="r num">${xs.length}</td><td class="r num">${xs.filter((t) => t.net > 0).length}</td><td class="r num ${cls(v)}">${xs.length ? inr(v) : '—'}</td><td class="r num">${d.close?.data.balance != null ? inr(d.close.data.balance) : '—'}</td><td class="small">${seal(d)}</td></tr>`;
   }).reverse().join('');
 
   let last = '';
@@ -167,12 +175,14 @@
   }).join('');
 
   $('#app').innerHTML = `
+    ${start ? `<div class="panel small"><b>Starting balance ${inr(start.capital)}</b> (paper, on ${dayName(ist(start.at).toISOString().slice(0, 10))}). Each trade risks <b>${start.riskPct}%</b> of ${sizedOn(start)}: the amount lost if its stop-loss is hit, which sets the quantity.${changes.map((c) => ` <span class="muted">On ${dayName(ist(c.at).toISOString().slice(0, 10))} sizing changed to ${c.riskPct}% of ${sizedOn(c)}.</span>`).join('')}</div>` : ''}
     <div class="kpis">
+      ${start ? `${kpi('Starting balance', inr(base))}${kpi('Balance now', inr(base + net), cls(net), `${pct(net)} on the start`)}` : ''}
       ${kpi('Trading days', days.length)}${kpi('Closed trades', trades.length)}${kpi('Win rate', trades.length ? `${Math.round((wins.length / trades.length) * 100)}%` : '—')}
-      ${kpi('Net after charges', inr(net), cls(net))}${kpi('Avg win / avg loss', `${inr(avg(wins))} / ${inr(avg(losses))}`)}${kpi('Worst drop from peak', inr(dd), dd < 0 ? 'down' : '')}${kpi('Charges paid', inr(charges))}
+      ${kpi('Net after charges', inr(net), cls(net), start ? pct(net) : '')}${kpi('Avg win / avg loss', `${inr(avg(wins))} / ${inr(avg(losses))}`)}${kpi('Worst drop from peak', inr(dd), dd < 0 ? 'down' : '', start && dd < 0 ? pct(dd) : '')}${kpi('Charges paid', inr(charges))}
     </div>
-    <div class="panel"><h2>Running net P&amp;L, trade by trade</h2>${curve.length ? svg : '<div class="empty">No closed trades yet</div>'}</div>
-    <div class="panel"><h2>By date</h2><div class="wrap"><table><tr><th>Date</th><th class="r">Alerts</th><th class="r">Trades</th><th class="r">Won</th><th class="r">Net</th><th>Proof</th></tr>${dayRows}</table></div></div>
+    <div class="panel"><h2>${start ? 'Balance, trade by trade' : 'Running net P&amp;L, trade by trade'}</h2>${curve.length ? svg : '<div class="empty">No closed trades yet</div>'}</div>
+    <div class="panel"><h2>By date</h2><div class="wrap"><table><tr><th>Date</th><th class="r">Alerts</th><th class="r">Trades</th><th class="r">Won</th><th class="r">Net</th><th class="r">Balance at close</th><th>Proof</th></tr>${dayRows}</table></div></div>
     <div class="two">${gtable('By time of day', byTime)}${gtable('By weekday', byWd)}</div>
     <div class="panel"><h2>Every trade</h2><p class="muted small">Times are IST. # is the trade's entry number in the ledger.${open.length ? ` ${open.length} trade(s) still open.` : ''}</p>
       <div class="wrap"><table><tr><th>In → out</th><th>Held</th><th>Instrument</th><th>Side</th><th class="r">Qty</th><th class="r">Entry</th><th class="r">Exit</th><th class="r">Charges</th><th class="r">Net</th><th>Why it closed</th><th class="r">#</th></tr>${tradeRows || '<tr><td colspan="11" class="empty">No closed trades yet</td></tr>'}</table></div></div>

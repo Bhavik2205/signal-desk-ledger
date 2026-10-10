@@ -13,9 +13,9 @@ trader's reaction delay with slippage; profits are **after Zerodha charges** (br
 
 ### By date
 
-| Date | Trades | Won | Net P&L | Charges | Total R | Day fingerprint | Bitcoin timestamp |
-|---|---:|---:|---:|---:|---:|---|---|
-| — | | | | | | | |
+| Date | Trades | Won | Net P&L | Charges | Total R | Day fingerprint | Balance at close | Bitcoin timestamp |
+|---|---:|---:|---:|---:|---:|---|---:|---|
+| — | | | | | | | | |
 
 ### By time of day (when the trade was entered, IST)
 
