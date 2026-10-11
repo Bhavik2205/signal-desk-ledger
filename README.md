@@ -1,3 +1,5 @@
+<img src="logo.svg" alt="Signal Desk" width="64" height="64">
+
 # Signal Desk — verified paper-trading record
 
 Automatic paper trades that followed the alerts of [Signal Desk](https://desk.arcticfawn.com), on **live NSE market prices**
