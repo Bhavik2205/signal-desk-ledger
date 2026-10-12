@@ -11,10 +11,10 @@ trader's reaction delay with slippage; profits are **after Zerodha charges** (br
 
 ## Results
 
-**Starting balance ₹55,510** (paper) · each trade risks 1% of ₹55,510 (the loss if its stop-loss is hit)
-**Balance now ₹54,505 (−1.81% on the starting balance)**
+**Starting balance ₹55,510** (paper) · each trade risks 1% of ₹55,510 (the loss if its stop-loss is hit) · now 1% of the paper balance at the time
+**Balance now ₹60,878 (+9.67% on the starting balance)**
 
-**1 closed trades · 0 won (0%) · net −₹1,005 after ₹70 charges**
+**14 closed trades · 8 won (57%) · net ₹5,368 after ₹1,043 charges**
 
 ### By date
 
@@ -26,8 +26,8 @@ trader's reaction delay with slippage; profits are **after Zerodha charges** (br
 
 | Time | Trades | Won | Win rate | Net P&L |
 |---|---:|---:|---:|---:|
-| 09:15–10:00 | 1 | 0 | 0% | −₹1,005 |
-| 10:00–11:00 | 0 | 0 | — | ₹0 |
+| 09:15–10:00 | 11 | 6 | 55% | ₹5,615 |
+| 10:00–11:00 | 3 | 2 | 67% | −₹247 |
 | 11:00–12:00 | 0 | 0 | — | ₹0 |
 | 12:00–13:00 | 0 | 0 | — | ₹0 |
 | 13:00–14:00 | 0 | 0 | — | ₹0 |
@@ -37,7 +37,7 @@ trader's reaction delay with slippage; profits are **after Zerodha charges** (br
 
 | Day | Trades | Won | Win rate | Net P&L |
 |---|---:|---:|---:|---:|
-| Mon | 1 | 0 | 0% | −₹1,005 |
+| Mon | 14 | 8 | 57% | ₹5,368 |
 | Tue | 0 | 0 | — | ₹0 |
 | Wed | 0 | 0 | — | ₹0 |
 | Thu | 0 | 0 | — | ₹0 |
