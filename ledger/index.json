@@ -1,7 +1,7 @@
 {
   "startDay": "2026-10-12",
   "repoUrl": "https://github.com/Bhavik2205/signal-desk-ledger",
-  "generatedAt": 1791963990378,
+  "generatedAt": 1791972949849,
   "days": [
     {
       "day": "2026-10-12",
@@ -19,8 +19,8 @@
     },
     {
       "day": "2026-10-14",
-      "sealed": false,
-      "stamped": false,
+      "sealed": true,
+      "stamped": true,
       "confirmed": false,
       "block": null
     }
