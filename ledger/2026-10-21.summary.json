@@ -1,0 +1,25 @@
+{
+  "day": "2026-10-21",
+  "root": "bd738016bacf285cf580ca607e7e4c1d348ead6ba8af86ff9b44a780cbe49488",
+  "seq": 501,
+  "entries": 12,
+  "totals": {
+    "day": "2026-10-21",
+    "alerts": 3,
+    "fills": 1,
+    "closedTrades": 1,
+    "wins": 0,
+    "losses": 1,
+    "net": -2746.83,
+    "gross": -2679.75,
+    "charges": 67.08,
+    "totalR": -0.87,
+    "entries": 11,
+    "firstSeq": 490,
+    "startCapital": 55510,
+    "balance": 69069.46,
+    "equity": 69069.71,
+    "openTrades": 0
+  },
+  "sealedAt": "2026-10-21T10:15:34.170Z"
+}
