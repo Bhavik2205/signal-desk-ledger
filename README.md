@@ -11,7 +11,7 @@ trader's reaction delay with slippage; profits are **after Zerodha charges** (br
 
 ## Results
 
-**Starting balance ₹55,510** (paper) · each trade risks 1% of ₹55,510 (the loss if its stop-loss is hit) · now 0.5% of the paper balance at the time
+**Starting balance ₹55,510** (paper) · each trade risks 1% of ₹55,510 (the loss if its stop-loss is hit) · now 1% of the paper balance at the time
 **Balance now ₹68,557 (+23.5% on the starting balance)**
 
 **69 closed trades · 39 won (57%) · net ₹13,047 after ₹4,791 charges**
