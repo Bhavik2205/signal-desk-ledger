@@ -11,7 +11,7 @@ trader's reaction delay with slippage; profits are **after Zerodha charges** (br
 
 ## Results
 
-**Starting balance ₹55,510** (paper) · each trade risks 1% of ₹55,510 (the loss if its stop-loss is hit) · now 1% of the paper balance at the time
+**Starting balance ₹55,510** (paper) · each trade risks 1% of ₹55,510 (the loss if its stop-loss is hit) · now 0.5% of the paper balance at the time
 **Balance now ₹68,557 (+23.5% on the starting balance)**
 
 **69 closed trades · 39 won (57%) · net ₹13,047 after ₹4,791 charges**
@@ -28,6 +28,7 @@ trader's reaction delay with slippage; profits are **after Zerodha charges** (br
 | 2026-10-19 | 6 | 3 | ₹5,850 | ₹409 | 1.76 | `559d93efbde68763…` | ₹71,816 | ✅ in Bitcoin |
 | 2026-10-21 | 1 | 0 | −₹2,747 | ₹67 | -0.87 | `bd738016bacf285c…` | ₹69,069 | ✅ in Bitcoin |
 | 2026-10-22 | 1 | 0 | −₹512 | ₹62 | -1.25 | `6e4095bb30b40eaa…` | ₹68,557 | ✅ in Bitcoin |
+| 2026-10-25 | 0 | 0 | ₹0 | ₹0 | 0 | `b963a2cd1c69992b…` | ₹68,557 | ⏳ pending |
 
 ### By time of day (when the trade was entered, IST)
 
