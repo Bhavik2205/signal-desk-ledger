@@ -30,7 +30,7 @@ trader's reaction delay with slippage; profits are **after Zerodha charges** (br
 | 2026-10-22 | 1 | 0 | −₹512 | ₹62 | -1.25 | `6e4095bb30b40eaa…` | ₹68,557 | ✅ in Bitcoin |
 | 2026-10-25 | 0 | 0 | ₹0 | ₹0 | 0 | `b963a2cd1c69992b…` | ₹68,557 | ✅ in Bitcoin |
 | 2026-10-26 | 1 | 0 | −₹68 | ₹32 | -0.04 | `80f5ddcd3d2718b5…` | ₹68,489 | ✅ in Bitcoin |
-| 2026-10-27 | 1 | 0 | −₹1,347 | ₹97 | -0.85 | `1bc7ae2c0db2ce74…` | ₹67,142 | ⏳ pending |
+| 2026-10-27 | 1 | 0 | −₹1,347 | ₹97 | -0.85 | `1bc7ae2c0db2ce74…` | ₹67,142 | ✅ in Bitcoin |
 
 ### By time of day (when the trade was entered, IST)
 
