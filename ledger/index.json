@@ -112,8 +112,8 @@
       "day": "2026-11-03",
       "sealed": true,
       "stamped": true,
-      "confirmed": false,
-      "block": null
+      "confirmed": true,
+      "block": "974389"
     }
   ]
 }
