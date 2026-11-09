@@ -2,7 +2,7 @@
 
 # Signal Desk — verified paper-trading record
 
-Automatic paper trades that followed the alerts of [Signal Desk](https://desk.arcticfawn.com), on **live NSE market prices**
+Automatic paper trades that followed the alerts of Signal Desk, on **live NSE market prices**
 (Zerodha Kite feed), from **2026-10-12**. No practice/simulated prices, no manual trades. Fills happen at the
 trader's reaction delay with slippage; profits are **after Zerodha charges** (brokerage, STT, exchange, SEBI, stamp, GST).
 
