@@ -39,6 +39,7 @@ trader's reaction delay with slippage; profits are **after Zerodha charges** (br
 | 2026-11-04 | 30 | 16 | ₹3,319 | ₹1,932 | 4.07 | `74e5b83b2e44a92f…` | ₹59,044 | ✅ in Bitcoin |
 | 2026-11-05 | 13 | 5 | −₹2,883 | ₹838 | -1.98 | `a1ac62258c9f0eec…` | ₹56,161 | ✅ in Bitcoin |
 | 2026-11-06 | 12 | 9 | ₹9,187 | ₹832 | 3.2 | `af7ee0ffd55d3aae…` | ₹65,348 | ✅ in Bitcoin |
+| 2026-11-09 | 23 | 7 | −₹6,512 | ₹1,620 | -0.45 | `08b321d4ef1332fd…` | ₹58,836 | ⏳ pending |
 
 ### By time of day (when the trade was entered, IST)
 
