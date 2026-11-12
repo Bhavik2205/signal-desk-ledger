@@ -1,0 +1,25 @@
+{
+  "day": "2026-11-12",
+  "root": "b4167209eceba44ce796ff88b298839b478e18e952aa5a115b5720770447f50f",
+  "seq": 1720,
+  "entries": 62,
+  "totals": {
+    "day": "2026-11-12",
+    "alerts": 19,
+    "fills": 2,
+    "closedTrades": 2,
+    "wins": 0,
+    "losses": 2,
+    "net": -686.87,
+    "gross": -556.5,
+    "charges": 130.37,
+    "totalR": 1.78,
+    "entries": 61,
+    "firstSeq": 1659,
+    "startCapital": 55510,
+    "balance": 58149.43,
+    "equity": 58149.68,
+    "openTrades": 0
+  },
+  "sealedAt": "2026-11-12T10:15:09.083Z"
+}
